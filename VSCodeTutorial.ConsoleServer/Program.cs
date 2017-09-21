@@ -3,7 +3,10 @@
     using System;
     using System.IO;
     using System.Security.Cryptography.X509Certificates;
+    using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
     using DotNetty.Codecs;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
@@ -31,7 +34,7 @@
             try
             {
                 var bootstrap = new ServerBootstrap();
-                bootstrap.Group(bossGroup,workerGroup);
+                bootstrap.Group(bossGroup, workerGroup);
                 bootstrap.Channel<TcpServerSocketChannel>();
                 bootstrap.Option(ChannelOption.SoBacklog, 100);
                 bootstrap.Handler(new LoggingHandler("SRV-LSTN"));
@@ -42,14 +45,15 @@
                         {
                             pipeline.AddLast("tls", TlsHandler.Server(tlsCertificate));
                         }
-                        pipeline.AddLast(new LoggingHandler("SRV-CONN"));
-                        pipeline.AddLast("framing-enc", new LengthFieldPrepender(2));
-                        pipeline.AddLast("framing-dec", new LengthFieldBasedFrameDecoder(ushort.MaxValue, 0, 2, 0, 2));
+                        //pipeline.AddLast(new LoggingHandler("SRV-CONN"));
+                        // pipeline.AddLast("framing-enc", new LengthFieldPrepender(2));
+                        // pipeline.AddLast("framing-dec", new LengthFieldBasedFrameDecoder(ushort.MaxValue, 0, 2, 0, 2));
 
                         pipeline.AddLast("echo", new EchoServerHandler());
-                        Action<string> messageTarget =ShowMessage; 
-                       
-                      
+                        pipeline.AddLast("User", new UserHandler());
+                        // Action<string> messageTarget = ShowMessage;
+
+
                     }));
 
                 IChannel boundChannel = await bootstrap.BindAsync(ServerSettings.Port);
@@ -60,22 +64,39 @@
             }
             finally
             {
-                
+
                 await Task.WhenAll(
                     bossGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
                     workerGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)));
-             
+
             }
         }
 
-       
-              
+
+
+
+        static void Main()
+        {
+            Thread _userthread = new Thread(new UserTest().UserTaskAsync);
+            _userthread.Start();
+            RunServerAsync().Wait();
+        }
+    }
+
+  public  class UserTest
+    {
+        
+        public void UserTaskAsync()
+        {
             
-        static void Main()=>  RunServerAsync().Wait();
-
-    
- 
-
-       public static void ShowMessage(string message) => Console.WriteLine("aaron-clark-aic loop test"+message);
+            SingleMem _s = SingleMem.Getinstance();
+            
+            
+            while (true)
+            {
+                Thread.Sleep(3000);
+                _s.FlushContext( String.Format("{0}+{1}","aaron-clark-aic",DateTime.Now.ToString()));
+            }
+        }
     }
 }
