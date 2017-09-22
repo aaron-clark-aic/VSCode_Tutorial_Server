@@ -9,7 +9,7 @@ namespace VSCodeTutorial.ConsoleServer
         override public void ChannelActive(IChannelHandlerContext context)
         {
             SingleMem _s = SingleMem.Getinstance();
-            _s.SetChannel(context);
+            _s.AddChannel(context);
         }
    
         //override public  Task WriteAsync(IChannelHandlerContext context, object message) => context.WriteAsync(message);

@@ -51,10 +51,12 @@
 
                         pipeline.AddLast("echo", new EchoServerHandler());
                         pipeline.AddLast("User", new UserHandler());
+                        
                         // Action<string> messageTarget = ShowMessage;
 
 
                     }));
+
 
                 IChannel boundChannel = await bootstrap.BindAsync(ServerSettings.Port);
 
